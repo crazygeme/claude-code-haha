@@ -102,6 +102,7 @@ export type UserSettings = {
   modelContext?: string
   effort?: EffortLevel
   alwaysThinkingEnabled?: boolean
+  autoDreamEnabled?: boolean
   permissionMode?: PermissionMode
   theme?: ThemeMode
   chatSendBehavior?: ChatSendBehavior

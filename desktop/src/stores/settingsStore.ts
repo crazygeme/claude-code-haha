@@ -60,6 +60,7 @@ type SettingsStore = {
   currentModel: ModelInfo | null
   effortLevel: EffortLevel
   thinkingEnabled: boolean
+  autoDreamEnabled: boolean
   availableModels: ModelInfo[]
   activeProviderName: string | null
   locale: Locale
@@ -95,6 +96,7 @@ type SettingsStore = {
   setModel: (modelId: string) => Promise<void>
   setEffort: (level: EffortLevel) => Promise<void>
   setThinkingEnabled: (enabled: boolean) => Promise<void>
+  setAutoDreamEnabled: (enabled: boolean) => Promise<void>
   setLocale: (locale: Locale) => void
   setTheme: (theme: ThemeMode) => Promise<void>
   setChatSendBehavior: (behavior: ChatSendBehavior) => Promise<void>
@@ -169,6 +171,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   currentModel: null,
   effortLevel: 'max',
   thinkingEnabled: true,
+  autoDreamEnabled: false,
   availableModels: [],
   activeProviderName: null,
   locale: getStoredLocale(),
@@ -231,6 +234,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         currentModel: model,
         effortLevel: level,
         thinkingEnabled: userSettings.alwaysThinkingEnabled !== false,
+        autoDreamEnabled: userSettings.autoDreamEnabled === true,
         theme,
         chatSendBehavior: normalizeChatSendBehavior(userSettings.chatSendBehavior),
         outputStyle: normalizeOutputStyle(userSettings.outputStyle),
@@ -298,6 +302,17 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       await settingsApi.updateUser({ alwaysThinkingEnabled: enabled })
     } catch {
       set({ thinkingEnabled: prev })
+    }
+  },
+
+  setAutoDreamEnabled: async (enabled) => {
+    const prev = get().autoDreamEnabled
+    set({ autoDreamEnabled: enabled })
+    try {
+      await settingsApi.updateUser({ autoDreamEnabled: enabled })
+    } catch (error) {
+      set({ autoDreamEnabled: prev })
+      throw error
     }
   },
 

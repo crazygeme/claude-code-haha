@@ -1438,6 +1438,8 @@ export function GeneralSettings() {
   const {
     thinkingEnabled,
     setThinkingEnabled,
+    autoDreamEnabled,
+    setAutoDreamEnabled,
     locale,
     setLocale,
     theme,
@@ -1480,6 +1482,8 @@ export function GeneralSettings() {
   const [isSavingNetwork, setIsSavingNetwork] = useState(false)
   const [notificationPermission, setNotificationPermission] = useState<DesktopNotificationPermission>('default')
   const [notificationActionRunning, setNotificationActionRunning] = useState(false)
+  const [autoDreamConfirmOpen, setAutoDreamConfirmOpen] = useState(false)
+  const [autoDreamActionRunning, setAutoDreamActionRunning] = useState(false)
   const [modeSwitchConfirmOpen, setModeSwitchConfirmOpen] = useState(false)
   const [pendingMode, setPendingMode] = useState<AppMode | null>(null)
   const [pendingPortableDir, setPendingPortableDir] = useState<string | null>(null)
@@ -1659,6 +1663,24 @@ export function GeneralSettings() {
       }
     } finally {
       setNotificationActionRunning(false)
+    }
+  }
+
+  const handleAutoDreamToggle = (enabled: boolean) => {
+    if (enabled) {
+      setAutoDreamConfirmOpen(true)
+      return
+    }
+    void setAutoDreamEnabled(false)
+  }
+
+  const confirmAutoDreamEnable = async () => {
+    setAutoDreamActionRunning(true)
+    try {
+      await setAutoDreamEnabled(true)
+      setAutoDreamConfirmOpen(false)
+    } finally {
+      setAutoDreamActionRunning(false)
     }
   }
 
@@ -2089,6 +2111,31 @@ export function GeneralSettings() {
             </div>
             <div className="text-xs text-[var(--color-text-tertiary)] mt-1 leading-5">
               {t('settings.general.thinkingHint')}
+            </div>
+          </div>
+        </label>
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">{t('settings.general.autoDreamTitle')}</h2>
+        <p className="text-sm text-[var(--color-text-tertiary)] mb-3">{t('settings.general.autoDreamDescription')}</p>
+        <label className="flex items-start gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-container-low)] px-4 py-3 cursor-pointer hover:border-[var(--color-border-focus)] transition-colors">
+          <input
+            type="checkbox"
+            aria-label={t('settings.general.autoDreamEnabled')}
+            checked={autoDreamEnabled}
+            onChange={(e) => handleAutoDreamToggle(e.target.checked)}
+            className="peer sr-only"
+          />
+          <SettingsCheckboxMark checked={autoDreamEnabled} />
+          <div className="min-w-0">
+            <div className="text-sm font-medium text-[var(--color-text-primary)]">
+              {t('settings.general.autoDreamEnabled')}
+            </div>
+            <div className="text-xs text-[var(--color-text-tertiary)] mt-1 leading-5">
+              {autoDreamEnabled
+                ? t('settings.general.autoDreamHintOn')
+                : t('settings.general.autoDreamHintOff')}
             </div>
           </div>
         </label>
@@ -2614,6 +2661,24 @@ export function GeneralSettings() {
         cancelLabel={t('common.cancel')}
         confirmVariant="primary"
         loading={modeActionRunning}
+      />
+      <ConfirmDialog
+        open={autoDreamConfirmOpen}
+        onClose={() => {
+          if (!autoDreamActionRunning) setAutoDreamConfirmOpen(false)
+        }}
+        onConfirm={() => void confirmAutoDreamEnable()}
+        title={t('settings.general.autoDreamConfirmTitle')}
+        body={(
+          <div className="space-y-2">
+            <p>{t('settings.general.autoDreamConfirmKeepRunning')}</p>
+            <p>{t('settings.general.autoDreamConfirmTokenCost')}</p>
+          </div>
+        )}
+        confirmLabel={t('settings.general.autoDreamConfirmEnable')}
+        cancelLabel={t('common.cancel')}
+        confirmVariant="primary"
+        loading={autoDreamActionRunning}
       />
     </div>
   )

@@ -204,6 +204,7 @@ describe('Settings > General tab', () => {
       locale: 'en',
       theme: 'light',
       thinkingEnabled: true,
+      autoDreamEnabled: false,
       skipWebFetchPreflight: true,
       desktopNotificationsEnabled: true,
       chatSendBehavior: 'enter',
@@ -241,6 +242,9 @@ describe('Settings > General tab', () => {
       }),
       setThinkingEnabled: vi.fn().mockImplementation(async (enabled: boolean) => {
         useSettingsStore.setState({ thinkingEnabled: enabled })
+      }),
+      setAutoDreamEnabled: vi.fn().mockImplementation(async (enabled: boolean) => {
+        useSettingsStore.setState({ autoDreamEnabled: enabled })
       }),
       setTheme: vi.fn().mockImplementation(async (theme: ThemeMode) => {
         useSettingsStore.setState({ theme })
@@ -716,6 +720,41 @@ describe('Settings > General tab', () => {
     fireEvent.click(toggle)
 
     expect(useSettingsStore.getState().setThinkingEnabled).toHaveBeenCalledWith(false)
+  })
+
+  it('keeps Auto-dream disabled by default and confirms before enabling it', async () => {
+    render(<Settings />)
+
+    fireEvent.click(screen.getByText('General'))
+
+    const toggle = screen.getByLabelText('Enable Auto-dream')
+    expect(toggle).not.toBeChecked()
+    fireEvent.click(toggle)
+
+    expect(useSettingsStore.getState().setAutoDreamEnabled).not.toHaveBeenCalled()
+    const dialog = screen.getByRole('dialog', { name: 'Enable Auto-dream?' })
+    expect(within(dialog).getByText(/Keep the desktop app running/i)).toBeInTheDocument()
+    expect(within(dialog).getByText(/uses additional model tokens/i)).toBeInTheDocument()
+
+    await act(async () => {
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Enable Auto-dream' }))
+    })
+
+    expect(useSettingsStore.getState().setAutoDreamEnabled).toHaveBeenCalledWith(true)
+    expect(screen.getByLabelText('Enable Auto-dream')).toBeChecked()
+  })
+
+  it('lets the user disable Auto-dream without a confirmation dialog', async () => {
+    useSettingsStore.setState({ autoDreamEnabled: true })
+    render(<Settings />)
+
+    fireEvent.click(screen.getByText('General'))
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('Enable Auto-dream'))
+    })
+
+    expect(screen.queryByRole('dialog', { name: 'Enable Auto-dream?' })).not.toBeInTheDocument()
+    expect(useSettingsStore.getState().setAutoDreamEnabled).toHaveBeenCalledWith(false)
   })
 
   it('uses the shared dropdown for response language', () => {
